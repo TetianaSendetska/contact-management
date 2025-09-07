@@ -15,32 +15,32 @@
 </div>
 
 <div class="text-center">
-<h1 class="display-4">Contacts</h1>
+    <h1 class="display-4">Contacts</h1>
 
-@if (Model != null && Model.Any())
-{
-    <table class="table" id="contactsTable">
-        <thead>
-            <tr>
+    @if (Model != null && Model.Any())
+    {
+        <label>Click on the header of a column to sort the table by that column</label>
+        <table class="table" id="contactsTable">
+            <thead>
+                <tr>
                     <th>Name</th>
                     <th>Date of Birth</th>
                     <th>Married</th>
                     <th>Phone</th>
                     <th>Salary</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var contact in Model)
-            {
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var contact in Model)
+                {
                     <tr data-id="@contact.Id">
-                    <td class="name">@contact.Name</td>
+                        <td class="name">@contact.Name</td>
                         <td class="dob">@((contact.DateOfBirth ?? default).ToString("yyyy-MM-dd"))</td>
-                    <td class="married">@contact.Married</td>
-                    <td class="phone">@contact.Phone</td>
-                    <td class="salary">@contact.Salary</td>
-                    <td>
-                       
+                        <td class="married">@contact.Married</td>
+                        <td class="phone">@contact.Phone</td>
+                        <td class="salary">@contact.Salary</td>
+                        <td>
                             <button class="btn btn-sm btn-primary edit-btn">Edit</button>
                             <button class="btn btn-sm btn-success save-btn d-none">Save</button>
                             <button class="btn btn-sm btn-secondary cancel-btn d-none">Cancel</button>
@@ -48,11 +48,10 @@
                                 <input type="hidden" name="id" value="@contact.Id" />
                                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                             </form>
-
-                    </td>
-                </tr>
-            }
-        </tbody>
+                        </td>
+                    </tr>
+                }
+            </tbody>
         </table>
 
         <a asp-controller="Contact" asp-action="Upload" class="btn btn-secondary" style="margin-top: 7px">Upload CSV file</a>
