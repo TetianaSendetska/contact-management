@@ -1,0 +1,12 @@
+﻿@{
+    ViewData["Title"] = "Upload file";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Select a file</h1>
+    <form asp-controller="Contact" asp-action="Upload" enctype="multipart/form-data" method="post">
+        <input type="file" name="postedFile" accept=".csv" />
+        <button type="submit" class="btn btm-primary">Upload file</button>
+    </form>
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+</div>

@@ -1,0 +1,200 @@
+﻿@{
+    ViewData["Title"] = "Contact Manager Page";
+}
+@model IEnumerable<contact_manager.Models.Contact>
+
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+    <div id="toastMessage" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastText">
+                Toast message
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<div class="text-center">
+<h1 class="display-4">Contacts</h1>
+
+@if (Model != null && Model.Any())
+{
+    <table class="table" id="contactsTable">
+        <thead>
+            <tr>
+                    <th>Name</th>
+                    <th>Date of Birth</th>
+                    <th>Married</th>
+                    <th>Phone</th>
+                    <th>Salary</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var contact in Model)
+            {
+                    <tr data-id="@contact.Id">
+                    <td class="name">@contact.Name</td>
+                        <td class="dob">@((contact.DateOfBirth ?? default).ToString("yyyy-MM-dd"))</td>
+                    <td class="married">@contact.Married</td>
+                    <td class="phone">@contact.Phone</td>
+                    <td class="salary">@contact.Salary</td>
+                    <td>
+                       
+                            <button class="btn btn-sm btn-primary edit-btn">Edit</button>
+                            <button class="btn btn-sm btn-success save-btn d-none">Save</button>
+                            <button class="btn btn-sm btn-secondary cancel-btn d-none">Cancel</button>
+                            <form asp-action="Delete" asp-controller="Contact" method="post">
+                                <input type="hidden" name="id" value="@contact.Id" />
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+        </table>
+
+        <a asp-controller="Contact" asp-action="Upload" class="btn btn-secondary" style="margin-top: 7px">Upload CSV file</a>
+    }
+    else
+    {
+        <p>No contacts uploaded yet.</p>
+    }
+
+</div>
+
+@section Scripts {
+        <script>
+        let sortDirection = true;
+
+        const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
+
+        const comparer = (idx, asc) => (a, b) => ((v1, v2) =>
+            v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
+        )(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));
+
+        document.querySelectorAll('th').forEach(th => th.addEventListener('click', (() => {
+            const table = th.closest('table');
+            const tbody = table.querySelector('tbody');
+            Array.from(tbody.querySelectorAll('tr'))
+                .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
+                .forEach(tr => tbody.appendChild(tr));
+        })));
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const message = '@TempData["ToastMessage"]';
+            const type = '@TempData["ToastType"]' || 'success';
+
+            if (message) {
+                const toastEl = document.getElementById('toastMessage');
+                const toastText = document.getElementById('toastText');
+
+                toastText.textContent = message;
+
+                toastEl.className = `toast align-items-center text-bg-${type} border-0`;
+
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show();
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            document.querySelectorAll(".edit-btn").forEach(button => {
+                button.addEventListener("click", function () {
+                    const row = this.closest("tr");
+
+                    row.querySelector(".save-btn").classList.remove("d-none");
+                    row.querySelector(".cancel-btn").classList.remove("d-none");
+                    this.classList.add("d-none");
+
+                    row.querySelectorAll("td").forEach((td, index) => {
+                        let value = td.textContent.trim();
+
+                        if (td.classList.contains("id")) return; 
+                        if (td.querySelector("button")) return; 
+
+                        td.setAttribute("data-original", value);
+
+                        if (td.classList.contains("dob")) {
+                            td.innerHTML = `<input type="date" class="form-control form-control-sm" value="${value}">`;
+                        }
+                        else if (td.classList.contains("married")) {
+                            const checked = (value.toLowerCase() === "true") ? "checked" : "";
+                            td.innerHTML = `<input type="checkbox" ${checked}>`;
+                        }
+                        else {
+                            td.innerHTML = `<input type="text" class="form-control form-control-sm" value="${value}">`;
+                        }
+                    });
+                });
+            });
+
+            document.querySelectorAll(".cancel-btn").forEach(button => {
+                button.addEventListener("click", function () {
+                    const row = this.closest("tr");
+
+                    row.querySelector(".edit-btn").classList.remove("d-none");
+                    row.querySelector(".save-btn").classList.add("d-none");
+                    this.classList.add("d-none");
+
+                    row.querySelectorAll("td").forEach(td => {
+                        if (td.hasAttribute("data-original")) {
+                            td.textContent = td.getAttribute("data-original");
+                            td.removeAttribute("data-original");
+                        }
+                    });
+                });
+            });
+
+            document.querySelectorAll(".save-btn").forEach(button => {
+                button.addEventListener("click", async function () {
+                    const row = this.closest("tr");
+
+                    const id = row.dataset.id;
+                    const name = row.querySelector(".name input").value;
+                    const dob = row.querySelector(".dob input").value;
+                    const married = row.querySelector(".married input").checked;
+                    const phone = row.querySelector(".phone input").value;
+                    const salary = row.querySelector(".salary input").value;
+
+                    const response = await fetch("/Contact/Edit", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            Id: id,         
+                            Name: name,
+                            DateOfBirth: dob,
+                            Married: married,
+                            Phone: phone,
+                            Salary: parseFloat(salary),
+                        })
+                    });
+
+                    if (response.ok) {
+                        row.querySelector(".name").textContent = name;
+                        row.querySelector(".dob").textContent = dob;
+                        row.querySelector(".married").textContent = married;
+                        row.querySelector(".phone").textContent = phone;
+                        row.querySelector(".salary").textContent = salary;
+
+                        row.querySelector(".edit-btn").classList.remove("d-none");
+                        row.querySelector(".cancel-btn").classList.add("d-none");
+                        this.classList.add("d-none");
+                        
+                    } else {
+                        alert("Помилка при збереженні!");
+                    }
+                });
+            });
+        });
+
+    </script>
+}
+
+    <style>
+        th {
+            cursor: pointer;
+        }
+    </style>
